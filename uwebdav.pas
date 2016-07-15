@@ -1,4 +1,4 @@
-unit uWebDAV;
+unit uwebdav;
 
 {$mode objfpc}{$H+}
 
@@ -40,7 +40,7 @@ type
   TWDResourceList = specialize TFPGObjectList<TWDResource>;
 
 type
-  TWebDAVSend = class
+  TWebDAVDrive = class
   private
     FToken: ansistring;
     FLogin: string;
@@ -69,14 +69,14 @@ implementation
 
 uses Dialogs, base64, laz2_XMLRead, laz2_DOM;
 
-{ TWebDAVSend }
+{ TTWebDAVDrive }
 
-constructor TWebDAVSend.Create;
+constructor TWebDAVDrive.Create;
 begin
   inherited;
 end;
 
-destructor TWebDAVSend.Destroy;
+destructor TWebDAVDrive.Destroy;
 begin
   inherited;
 end;
@@ -87,7 +87,7 @@ type
 const
   URLSpecialChar: TSpecials = [#$00..#$20, '<', '>', '"', '%', '{', '}', '|', '\', '^', '[', ']', '`', #$7F..#$FF];
 
-function TWebDAVSend.EncodeUTF8URI(const URI: string): string;
+function TWebDAVDrive.EncodeUTF8URI(const URI: string): string;
 var
   i: integer;
   char: AnsiChar;
@@ -105,7 +105,7 @@ begin
   end;
 end;
 
-function TWebDAVSend.Get(const ElementHref: string; var Response: TStream; Callback: TDataEvent): boolean;
+function TWebDAVDrive.Get(const ElementHref: string; var Response: TStream; Callback: TDataEvent): boolean;
 var
   URL: string;
   HTTP: TFPHTTPClient;
@@ -131,7 +131,7 @@ begin
   end;
 end;
 
-function TWebDAVSend.Put(const ElementHref: string; var Response: TStream; Callback: TDataEvent): boolean;
+function TWebDAVDrive.Put(const ElementHref: string; var Response: TStream; Callback: TDataEvent): boolean;
 var
   URL, Rs: string;
   HTTP: TFPHTTPClient;
@@ -155,7 +155,7 @@ begin
   end;
 end;
 
-function TWebDAVSend.GetRequestURL(const Element: string; EncodePath: boolean): string;
+function TWebDAVDrive.GetRequestURL(const Element: string; EncodePath: boolean): string;
 var
   URI: string;
   WebDavStr: string;
@@ -177,7 +177,7 @@ end;
 
 
 
-function TWebDAVSend.MKCOL(const ElementPath: string): boolean;
+function TWebDAVDrive.MKCOL(const ElementPath: string): boolean;
 var
   HTTP: TFPHTTPClient;
   SS : TStringStream;
@@ -196,7 +196,7 @@ begin
   end;
 end;
 
-function TWebDAVSend.PROPFIND(Depth: integer; const Element: string): string;
+function TWebDAVDrive.PROPFIND(Depth: integer; const Element: string): string;
 var
   HTTP: TFPHTTPClient;
   SS : TStringStream;
@@ -215,18 +215,18 @@ begin
   end;
 end;
 
-procedure TWebDAVSend.SetToken;
+procedure TWebDAVDrive.SetToken;
 begin
   FToken := EncodeStringBase64(FLogin + ':' + FPassword);
 end;
 
-procedure TWebDAVSend.SetLogin(const Value: string);
+procedure TWebDAVDrive.SetLogin(const Value: string);
 begin
   FLogin := Value;
   SetToken;
 end;
 
-procedure TWebDAVSend.SetPassword(const Value: string);
+procedure TWebDAVDrive.SetPassword(const Value: string);
 begin
   FPassword := Value;
   SetToken;

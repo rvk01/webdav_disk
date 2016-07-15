@@ -51,6 +51,7 @@ type
   public
     { Public declarations }
     Resources: TWDResourceList;
+    WebDAV: TWebDAVDrive;
     procedure Callback_up(Sender: TObject; const ContentLength, CurrentPos: int64);
     procedure Callback_down(Sender: TObject; const ContentLength, CurrentPos: int64);
   end;
@@ -64,13 +65,10 @@ uses DateUtils, fgl;
 
 {$R *.lfm}
 
-var
-  WebDAV: TWebDAVSend;
-
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   Resources := TWDResourceList.Create(True);
-  WebDAV := TWebDAVSend.Create;
+  WebDAV := TWebDAVDrive.Create;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -158,25 +156,46 @@ begin
   Filename := ExtractFilePath(Application.ExeName) + Res.DisplayName;
   Stream := TFileStream.Create(Filename, fmCreate or fmOpenWrite);
   try
-    if WebDAV.Get(Res.Href, Stream, @Callback_down) then;
+    if WebDAV.Get(Res.Href, Stream, @Callback_down) then
+      Showmessage('Done');
   finally
     Stream.Free;
   end;
 end;
 
 procedure TMainForm.Callback_down(Sender: TObject; const ContentLength, CurrentPos: int64);
+var
+  Max, Pos: Int64;
 begin
-  if Progressbar1.Max <> ContentLength then
-    Progressbar1.Max := ContentLength;
-  Progressbar1.Position := CurrentPos;
+  Max := ContentLength;
+  Pos := CurrentPos;
+  if Max > High(Integer) then
+  begin
+    // TProgressBar.Max is an Integer so Int64 doesn't fit
+    // We need to scale down
+    Max := High(Integer);
+    Pos := Trunc(CurrentPos * (Max / ContentLength));
+  end;
+  if Progressbar1.Max <> ContentLength then Progressbar1.Max := Max;
+  Progressbar1.Position := Pos;
   Application.ProcessMessages;
 end;
 
 procedure TMainForm.Callback_up(Sender: TObject; const ContentLength, CurrentPos: int64);
+var
+  Max, Pos: Int64;
 begin
-  if Progressbar1.Max <> ContentLength then
-    Progressbar1.Max := ContentLength;
-  Progressbar1.Position := CurrentPos;
+  Max := ContentLength;
+  Pos := CurrentPos;
+  if Max > High(Integer) then
+  begin
+    // TProgressBar.Max is an Integer so Int64 doesn't fit
+    // We need to scale down
+    Max := High(Integer);
+    Pos := Trunc(CurrentPos * (Max / ContentLength));
+  end;
+  if Progressbar1.Max <> ContentLength then Progressbar1.Max := Max;
+  Progressbar1.Position := Pos;
   Application.ProcessMessages;
 end;
 

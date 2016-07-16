@@ -42,32 +42,47 @@ type
 type
   TWebDAVDrive = class
   private
-    FToken: ansistring;
     FLogin: string;
     FPassword: string;
     FDirectory: string;
-    procedure SetLogin(const Value: string);
-    procedure SetPassword(const Value: string);
-    procedure SetToken;
     function EncodeUTF8URI(const URI: string): string;
     function GetRequestURL(const Element: string; EncodePath: boolean = False): string;
   public
     constructor Create;
     destructor Destroy; override;
-    function PROPFIND(Depth: integer {0/1}; const Element: string): string;
-    function MKCOL(const ElementPath: string): boolean;
-    function Get(const ElementHref: string; var Response: TStream; Callback: TDataEvent): boolean;
-    function Put(const ElementHref: string; var Response: TStream; Callback: TDataEvent): boolean;
-    property Login: string read FLogin write SetLogin;
-    property Password: string read FPassword write SetPassword;
+    property Login: string read FLogin write FLogin;
+    property Password: string read FPassword write FPassword;
     property Directory: string read FDirectory write FDirectory;
+
+    // GET - Download a file
+    function GET(const ElementHref: string; var Stream: TStream; Callback: TDataEvent): boolean;
+    // PUT - Upload a file
+    function PUT(const ElementHref: string; var Stream: TStream; Callback: TDataEvent): boolean;
+    // DELETE - Delete a file
+    function Delete(const ElementHref: string): boolean;
+    // PROPFIND - Properties of files and directories
+    // COPY - Copy a file
+    // not implemented
+    // MOVE - Move a file
+    // not implemented
+    function PROPFIND(Depth: integer {0/1}; const Element: string): string;
+    // MKCOL - Create a directory
+    function MKCOL(const ElementPath: string): boolean;
+    // PROPPATCH - Change the properties of a file or directory
+    // not implemented
+    // LOCK - Zet een slot op het object
+    // not implemented
+    // OPEN - Unlock een bron
+    // not implemented
+
   end;
 
 procedure ParseWebDavResources(const AXMLStr: string; var Resources: TWDResourceList);
 
 implementation
 
-uses Dialogs, base64, laz2_XMLRead, laz2_DOM;
+uses Dialogs, laz2_XMLRead, laz2_DOM,
+  ufphttphelper {ALWAYS LAST until fphttpclient is fixed};
 
 { TTWebDAVDrive }
 
@@ -85,7 +100,8 @@ type
   TSpecials = set of AnsiChar;
 
 const
-  URLSpecialChar: TSpecials = [#$00..#$20, '<', '>', '"', '%', '{', '}', '|', '\', '^', '[', ']', '`', #$7F..#$FF];
+  URLSpecialChar: TSpecials =
+    [#$00..#$20, '<', '>', '"', '%', '{', '}', '|', '\', '^', '[', ']', '`', #$7F..#$FF];
 
 function TWebDAVDrive.EncodeUTF8URI(const URI: string): string;
 var
@@ -105,56 +121,6 @@ begin
   end;
 end;
 
-function TWebDAVDrive.Get(const ElementHref: string; var Response: TStream; Callback: TDataEvent): boolean;
-var
-  URL: string;
-  HTTP: TFPHTTPClient;
-begin
-  Result := false;
-  if not Assigned(Response) then
-    Exit;
-  URL := GetRequestURL(ElementHref, false);
-  HTTP := TFPHTTPClient.Create(nil);
-  try
-    HTTP.RequestHeaders.Add('Authorization: Basic ' + FToken);
-    HTTP.RequestHeaders.Add('Accept: */*');
-    HTTP.OnDataReceived := Callback;
-    try
-      HTTP.Get(URL, Response);
-      Result := true;
-    except
-      on E: Exception do
-        ShowMessage(E.Message);
-    end;
-  finally
-    HTTP.Free;
-  end;
-end;
-
-function TWebDAVDrive.Put(const ElementHref: string; var Response: TStream; Callback: TDataEvent): boolean;
-var
-  URL, Rs: string;
-  HTTP: TFPHTTPClient;
-begin
-  Result := false;
-  if not Assigned(Response) then
-    Exit;
-  URL := GetRequestURL(ElementHref, true);
-  HTTP := TFPHTTPClient.Create(nil);
-  try
-    HTTP.RequestBody := Response;
-    HTTP.RequestHeaders.Add('Authorization: Basic ' + FToken);
-    HTTP.RequestHeaders.Add('Accept: */*');
-    HTTP.RequestHeaders.Add('Content-Type: application/binary');
-    HTTP.RequestHeaders.Add('Connection: Close');
-    Rs := HTTP.Put(URL);
-    Showmessage(Rs);
-    Result := true;
-  finally
-    HTTP.Free;
-  end;
-end;
-
 function TWebDAVDrive.GetRequestURL(const Element: string; EncodePath: boolean): string;
 var
   URI: string;
@@ -165,7 +131,7 @@ begin
   begin
     URI := Element;
     if URI[1] = '/' then
-      Delete(URI, 1, 1);
+      System.Delete(URI, 1, 1);
     if EncodePath then
       Result := WebDavStr + EncodeUTF8URI(URI)
     else
@@ -176,18 +142,94 @@ begin
 end;
 
 
+function TWebDAVDrive.GET(const ElementHref: string; var Stream: TStream;
+  Callback: TDataEvent): boolean;
+var
+  URL: string;
+  HTTP: TFPHTTPClient;
+begin
+  Result := False;
+  if not Assigned(Stream) then exit;
+  URL := GetRequestURL(ElementHref, False);
+  HTTP := TFPHTTPClient.Create(nil);
+  try
+    HTTP.UserName := Login;
+    HTTP.Password := Password;
+    HTTP.RequestHeaders.Add('Accept: */*');
+    HTTP.RequestHeaders.Add('Connection: Close');
+    HTTP.OnDataReceived := Callback;
+    try
+      HTTP.Get(URL, Stream);
+      Result := True;
+    except
+      on E: Exception do
+        ShowMessage(E.Message);
+    end;
+  finally
+    HTTP.Free;
+  end;
+end;
+
+function TWebDAVDrive.PUT(const ElementHref: string; var Stream: TStream; Callback: TDataEvent): boolean;
+var
+  URL, Rs: string;
+  HTTP: TFPHTTPClient;
+begin
+  Result := False;
+  if not Assigned(Stream) then Exit;
+  URL := GetRequestURL(ElementHref, True);
+  HTTP := TFPHTTPClient.Create(nil);
+  try
+    HTTP.RequestBody := Stream;
+    HTTP.UserName := Login;
+    HTTP.Password := Password;
+    HTTP.RequestHeaders.Add('Accept: */*');
+    HTTP.RequestHeaders.Add('Content-Type: application/binary');
+    HTTP.RequestHeaders.Add('Connection: Close');
+    HTTP.OnDataSent := Callback;
+    Rs := HTTP.Put(URL);
+    // ShowMessage(Rs); // created
+    Result := True;
+  finally
+    HTTP.Free;
+  end;
+end;
+
+function TWebDAVDrive.DELETE(const ElementHref: string): boolean;
+var
+  HTTP: TFPHTTPClient;
+  SS: TStringStream;
+begin
+  Result := False;
+  HTTP := TFPHTTPClient.Create(nil);
+  SS := TStringStream.Create('');
+  try
+    HTTP.UserName := Login;
+    HTTP.Password := Password;
+    HTTP.RequestHeaders.Add('Accept: */*');
+    HTTP.RequestHeaders.Add('Connection: Close');
+    HTTP.HTTPMethod('DELETE', GetRequestURL(ElementHref), SS, [204]);
+    Result := True;
+    //Result := SS.Datastring;
+  finally
+    SS.Free;
+    HTTP.Free;
+  end;
+end;
 
 function TWebDAVDrive.MKCOL(const ElementPath: string): boolean;
 var
   HTTP: TFPHTTPClient;
-  SS : TStringStream;
+  SS: TStringStream;
 begin
   Result := False;
   HTTP := TFPHTTPClient.Create(nil);
-  SS:=TStringStream.Create('');
+  SS := TStringStream.Create('');
   try
-    HTTP.RequestHeaders.Add('Authorization: Basic ' + FToken);
+    HTTP.UserName := Login;
+    HTTP.Password := Password;
     HTTP.RequestHeaders.Add('Accept: */*');
+    HTTP.RequestHeaders.Add('Connection: Close');
     HTTP.HTTPMethod('MKCOL', GetRequestURL(ElementPath), SS, [201]);
     //Result := SS.Datastring;
   finally
@@ -199,13 +241,15 @@ end;
 function TWebDAVDrive.PROPFIND(Depth: integer; const Element: string): string;
 var
   HTTP: TFPHTTPClient;
-  SS : TStringStream;
+  SS: TStringStream;
 begin
   HTTP := TFPHTTPClient.Create(nil);
-  SS:=TStringStream.Create('');
+  SS := TStringStream.Create('');
   try
-    HTTP.RequestHeaders.Add('Authorization: Basic ' + FToken);
+    HTTP.UserName := Login;
+    HTTP.Password := Password;
     HTTP.RequestHeaders.Add('Accept: */*');
+    HTTP.RequestHeaders.Add('Connection: Close');
     HTTP.RequestHeaders.Add('Depth: ' + IntToStr(Depth));
     HTTP.HTTPMethod('PROPFIND', GetRequestURL(Element), SS, [201, 207]);
     Result := SS.DataString;
@@ -215,23 +259,7 @@ begin
   end;
 end;
 
-procedure TWebDAVDrive.SetToken;
-begin
-  FToken := EncodeStringBase64(FLogin + ':' + FPassword);
-end;
-
-procedure TWebDAVDrive.SetLogin(const Value: string);
-begin
-  FLogin := Value;
-  SetToken;
-end;
-
-procedure TWebDAVDrive.SetPassword(const Value: string);
-begin
-  FPassword := Value;
-  SetToken;
-end;
-
+{ Support functions }
 
 function SeparateLeft(const Value, Delimiter: string): string;
 var
@@ -328,7 +356,8 @@ begin
                     Resources.Last.ContentLength :=
                       StrToInt64(PropertyNode.TextContent)
                   else if PropertyNode.NodeName = 'd:getlastmodified' then
-                    Resources.Last.Lastmodified := 0  // DecodeRfcDateTime(PropertyNode.TextContent) Fri, 15 Jul 2016 08:33:34 GMT
+                    Resources.Last.Lastmodified :=
+                      0  // DecodeRfcDateTime(PropertyNode.TextContent) Fri, 15 Jul 2016 08:33:34 GMT
                   else if PropertyNode.NodeName = 'd:resourcetype' then
                     Resources.Last.Collection := PropertyNode.ChildNodes.Count > 0;
 

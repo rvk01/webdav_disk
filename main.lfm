@@ -2,11 +2,10 @@ object MainForm: TMainForm
   Left = 298
   Height = 354
   Top = 180
-  Width = 803
-  ActiveControl = ListView1
+  Width = 926
   Caption = 'WebDav.Disk'
   ClientHeight = 354
-  ClientWidth = 803
+  ClientWidth = 926
   Color = clBtnFace
   Font.Color = clWindowText
   Font.Height = -11
@@ -14,54 +13,16 @@ object MainForm: TMainForm
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   Position = poDefaultPosOnly
-  LCLVersion = '1.7'
-  object ListView1: TListView
-    Left = 0
-    Height = 303
-    Top = 31
-    Width = 803
-    Align = alClient
-    Columns = <    
-      item
-        AutoSize = True
-        Caption = 'DisplayName'
-        Width = 799
-      end    
-      item
-        AutoSize = True
-        Caption = 'Href'
-        Width = 33
-      end    
-      item
-        AutoSize = True
-        Caption = 'ContentLength'
-        Width = 84
-      end    
-      item
-        AutoSize = True
-        Caption = 'Collection'
-        Width = 58
-      end    
-      item
-        AutoSize = True
-        Caption = 'Status Code'
-        Width = 71
-      end>
-    ReadOnly = True
-    RowSelect = True
-    TabOrder = 0
-    ViewStyle = vsReport
-    OnDblClick = ListView1DblClick
-  end
+  LCLVersion = '1.6.0.4'
   object Panel1: TPanel
     Left = 0
     Height = 31
     Top = 0
-    Width = 803
+    Width = 926
     Align = alTop
     ClientHeight = 31
-    ClientWidth = 803
-    TabOrder = 1
+    ClientWidth = 926
+    TabOrder = 0
     object Label1: TLabel
       Left = 8
       Height = 13
@@ -100,13 +61,13 @@ object MainForm: TMainForm
       Left = 480
       Height = 21
       Top = 4
-      Width = 176
+      Width = 112
       Caption = 'Retrieve directory'
       OnClick = btRetrieveClick
       TabOrder = 2
     end
     object btUpload: TButton
-      Left = 664
+      Left = 600
       Height = 21
       Top = 4
       Width = 75
@@ -115,28 +76,80 @@ object MainForm: TMainForm
       TabOrder = 3
     end
     object edSubdirectory: TEdit
-      Left = 360
+      Left = 352
       Height = 21
       Top = 4
       Width = 112
       TabOrder = 4
     end
     object Label3: TLabel
-      Left = 344
+      Left = 328
       Height = 13
       Top = 8
       Width = 13
       Caption = 'Dir'
       ParentColor = False
     end
+    object btDelete: TButton
+      Left = 680
+      Height = 21
+      Top = 4
+      Width = 75
+      Caption = 'Delete'
+      OnClick = btDeleteClick
+      TabOrder = 5
+    end
   end
   object ProgressBar1: TProgressBar
     Left = 0
     Height = 20
     Top = 334
-    Width = 803
+    Width = 926
     Align = alBottom
+    Smooth = True
+    TabOrder = 1
+    BarShowText = True
+  end
+  object StringGrid1: TStringGrid
+    Left = 0
+    Height = 303
+    Top = 31
+    Width = 926
+    Align = alClient
+    Columns = <    
+      item
+        Title.Caption = 'Displayname'
+        Width = 127
+      end    
+      item
+        Title.Caption = 'Href'
+        Width = 127
+      end    
+      item
+        Title.Caption = 'ContentLength'
+        Width = 127
+      end    
+      item
+        Title.Caption = 'Collection'
+        Width = 127
+      end    
+      item
+        Title.Caption = 'Statuscode'
+        Width = 127
+      end>
+    FixedCols = 0
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSelect, goSmoothScroll]
     TabOrder = 2
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -11
+    TitleFont.Name = 'Tahoma'
+    ColWidths = (
+      127
+      127
+      127
+      127
+      127
+    )
   end
   object OpenDialog1: TOpenDialog
     left = 316

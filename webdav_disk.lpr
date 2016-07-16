@@ -4,7 +4,7 @@ program webdav_disk;
 
 uses
   Forms, Interfaces,
-  main in 'main.pas' {MainForm}, uwebdav;
+  main in 'main.pas' {MainForm}, uwebdav, ufphttphelper;
 
 {$R *.res}
 

@@ -34,7 +34,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="3">
+    <Units Count="4">
       <Unit0>
         <Filename Value="webdav_disk.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -49,8 +49,11 @@
       <Unit2>
         <Filename Value="uwebdav.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="uWebDAV"/>
       </Unit2>
+      <Unit3>
+        <Filename Value="ufphttphelper.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit3>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

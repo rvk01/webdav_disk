@@ -35,7 +35,7 @@ type
     procedure btRetrieveClick(Sender: TObject);
     procedure btUploadClick(Sender: TObject);
     procedure btDeleteClick(Sender: TObject);
-    procedure ListView1DblClick(Sender: TObject);
+    procedure StringGrid1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -139,7 +139,7 @@ begin
       btRetrieve.Click;
 end;
 
-procedure TMainForm.ListView1DblClick(Sender: TObject);
+procedure TMainForm.StringGrid1Click(Sender: TObject);
 var
   Res: TWDResource;
   Stream: TStream;

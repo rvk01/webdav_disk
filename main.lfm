@@ -143,6 +143,7 @@ object MainForm: TMainForm
     TitleFont.Color = clWindowText
     TitleFont.Height = -11
     TitleFont.Name = 'Tahoma'
+    OnClick = StringGrid1Click
     ColWidths = (
       127
       127
